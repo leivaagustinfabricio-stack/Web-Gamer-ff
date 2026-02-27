@@ -1,0 +1,725 @@
+!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soy Gamers FF - Tienda</title>
+    <style>
+        :root {
+            --sidebar-bg: #2c3e50;
+            --sidebar-text: #ecf0f1;
+            --main-bg: #f4f7f6;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --whatsapp: #25D366;
+            --sidebar-width: 250px;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background-color: var(--sidebar-bg); 
+            color: var(--sidebar-text); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1); 
+            transition: width 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+            white-space: nowrap;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed { width: 0; padding: 0; }
+
+        .sidebar-title {
+            width: 100%; text-align: center; margin-bottom: 30px; padding: 15px;
+            border-bottom: 1px solid #34495e; font-size: 1.5rem; font-weight: bold;
+            background: linear-gradient(135deg, #e74c3c 0%, #3498db 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .menu-btn { background: none; border: none; color: var(--sidebar-text); padding: 15px; text-align: left; cursor: pointer; font-size: 1rem; transition: 0.3s; border-radius: 5px; margin-bottom: 5px; width: 100%; }
+        .menu-btn:hover, .menu-btn.active { background-color: var(--accent); }
+        .admin-section { margin-top: auto; border-top: 1px solid #34495e; padding-top: 20px; width: 100%; }
+        /* --- BOTÓN TOGGLE --- */
+        .toggle-btn {
+            position: absolute; top: 15px; left: 15px; z-index: 1000;
+            background: var(--accent); color: white; border: none;
+            padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 1.2rem;
+            transition: left 0.3s ease;
+        }
+        body:not(.menu-open) .toggle-btn { left: 15px; }
+        body.menu-open .toggle-btn { left: 265px; }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; background-color: var(--main-bg); position: relative; transition: margin-left 0.3s ease; }
+        .section { display: none; animation: fadeIn 0.5s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- ESTILOS GENERALES --- */
+        .home-header { text-align: center; margin-bottom: 30px; }
+        .main-title {
+            font-size: 3rem; font-weight: bold;
+            background: linear-gradient(135deg, #e74c3c 0%, #3498db 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 10px; letter-spacing: 3px;
+        }
+        .section-title { font-size: 2rem; color: #2c3e50; margin-bottom: 20px; text-align: center; }
+        
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .product-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; position: relative; }
+        .product-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 4px; }
+        .btn-buy { background-color: var(--success); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; }
+        .btn-buy:hover { background-color: #219150; }
+
+        /* --- RECARGAS --- */
+        .recargas-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+        .recarga-item {
+            background: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px;
+            border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center;
+        }
+        .recarga-item h3 { margin: 0 0 10px 0; color: #2c3e50; }
+        .recarga-item .price { font-size: 1.5rem; font-weight: bold; color: var(--success); }
+        .btn-add-recarga { background-color: var(--accent); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+
+        /* --- CARRITO FLOTANTE --- */
+        .cart-float { 
+            position: fixed; bottom: 20px; right: 20px; background: var(--whatsapp); 
+            color: white; padding: 15px 25px; border-radius: 50px; cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-weight: bold; z-index: 1000; 
+            display: flex; align-items: center; gap: 10px;
+        }        .cart-float:hover { transform: scale(1.05); }
+
+        /* --- ADMINISTRACIÓN --- */
+        .admin-panel { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap; }
+        .admin-tab { padding: 10px 20px; background: #f8f9fa; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .admin-tab.active { background: var(--accent); color: white; }
+        .admin-content { display: none; }
+        .admin-content.active { display: block; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        
+        .btn-save { background-color: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .btn-delete { background-color: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-edit { background-color: var(--warning); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 5px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+
+        /* --- MODAL CHECKOUT --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; }
+        .modal-content h3 { margin-top: 0; color: var(--whatsapp); }
+        .btn-whatsapp { background-color: var(--whatsapp); color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        
+        /* --- NOTIFICACIONES --- */
+        .notification {
+            position: fixed; top: 20px; right: 20px; background: var(--success);
+            color: white; padding: 15px 25px; border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 3000;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        /* Preview de imagen en admin */
+        .img-preview { max-width: 100px; max-height: 100px; margin-top: 10px; display: block; border-radius: 4px; }
+    </style>
+</head>
+<body class="menu-open">
+
+    <!-- BOTÓN TOGGLE -->
+    <button class="toggle-btn" onclick="toggleMenu()">☰</button>
+
+    <!-- MENÚ LATERAL -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-title" id="sidebar-store-name">SOYGAMERS FF</div>        <button class="menu-btn active" onclick="showSection('principal')">🏠 Principal</button>
+        <button class="menu-btn" onclick="showSection('recargas')">💎 Recargas</button>
+        <button class="menu-btn" onclick="showSection('catalogs')">📂 Catálogos</button>
+        <div class="admin-section">
+            <button class="menu-btn" onclick="checkAdminAccess()">⚙️ Administración</button>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-content">
+        
+        <!-- SECCIÓN 1: PRINCIPAL -->
+        <div id="principal" class="section active">
+            <div class="home-header">
+                <h1 class="main-title" id="display-store-name">SOYGAMERS FF</h1>
+            </div>
+            <h2 class="section-title" id="display-principal-title">Bienvenido a nuestra tienda</h2>
+            <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px;" id="display-principal-desc">Los mejores productos gaming al mejor precio.</p>
+            <div class="products-grid" id="principal-products"></div>
+        </div>
+
+        <!-- SECCIÓN 2: RECARGAS -->
+        <div id="recargas" class="section">
+            <h2 class="section-title">💎 Recargas Free Fire</h2>
+            <div class="recargas-container" id="recargas-list"></div>
+        </div>
+
+        <!-- SECCIÓN 3: CATÁLOGOS -->
+        <div id="catalogs" class="section">
+            <h2 class="section-title">Catálogo Completo</h2>
+            <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px;">Listado de todos los productos disponibles.</p>
+            <div class="products-grid" id="catalog-products"></div>
+        </div>
+
+        <!-- SECCIÓN 4: ADMINISTRACIÓN -->
+        <div id="admin" class="section">
+            <h2 class="section-title">Panel de Administración</h2>
+            <div class="admin-panel">
+                
+                <div class="admin-tabs">
+                    <button class="admin-tab active" onclick="showAdminTab('admin-principal')">🏠 Principal</button>
+                    <button class="admin-tab" onclick="showAdminTab('admin-recargas')">💎 Recargas</button>
+                    <button class="admin-tab" onclick="showAdminTab('admin-catalogos')">📂 Catálogos</button>
+                    <button class="admin-tab" onclick="showAdminTab('admin-pedidos')">📦 Pedidos</button>
+                    <button class="admin-tab" onclick="showAdminTab('admin-config')">⚙️ Configuración</button>
+                </div>
+
+                <!-- Admin: Principal -->
+                <div id="admin-principal" class="admin-content active">
+                    <h3>Editar Página Principal</h3>                    <div class="form-group">
+                        <label>Título Principal:</label>
+                        <input type="text" id="admin-principal-title">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <textarea id="admin-principal-desc"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Productos Destacados (IDs separados por coma):</label>
+                        <input type="text" id="admin-principal-featured" placeholder="1, 2, 3">
+                    </div>
+                    <button class="btn-save" onclick="savePrincipalSettings()">Guardar Cambios</button>
+                </div>
+
+                <!-- Admin: Recargas -->
+                <div id="admin-recargas" class="admin-content">
+                    <h3>Gestionar Recargas</h3>
+                    <div class="form-group">
+                        <label>Nombre del Paquete:</label>
+                        <input type="text" id="recarga-name">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción:</label>
+                        <input type="text" id="recarga-desc">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio ($):</label>
+                        <input type="number" id="recarga-price">
+                    </div>
+                    <input type="hidden" id="recarga-edit-id">
+                    <button class="btn-save" onclick="saveRecarga()">Guardar Recarga</button>
+                    <button onclick="clearRecargaForm()" style="background:#95a5a6; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-left:10px;">Cancelar</button>
+                    <h4 style="margin-top: 30px;">Lista de Recargas</h4>
+                    <table><thead><tr><th>Paquete</th><th>Precio</th><th>Acciones</th></tr></thead><tbody id="admin-recargas-table"></tbody></table>
+                </div>
+
+                <!-- Admin: Catálogos (Con subida de imagen) -->
+                <div id="admin-catalogos" class="admin-content">
+                    <h3>Gestionar Productos</h3>
+                    <div class="form-group">
+                        <label>Nombre del Producto:</label>
+                        <input type="text" id="prod-name">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio ($):</label>
+                        <input type="number" id="prod-price">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría:</label>                        <select id="prod-category">
+                            <option value="tecnologia">Tecnología</option>
+                            <option value="ropa">Ropa</option>
+                            <option value="accesorios">Accesorios</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Imagen del Producto:</label>
+                        <input type="file" id="prod-img-file" accept="image/*" onchange="previewImage(this)">
+                        <img id="prod-img-preview" class="img-preview" style="display:none;">
+                        <input type="hidden" id="prod-img-base64">
+                        <small style="color:#7f8c8d;">* Se recomienda usar imágenes pequeñas.</small>
+                    </div>
+                    <input type="hidden" id="prod-edit-id">
+                    <button class="btn-save" onclick="saveProduct()">Guardar Producto</button>
+                    <button onclick="clearProductForm()" style="background:#95a5a6; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-left:10px;">Cancelar</button>
+                    <h4 style="margin-top: 30px;">Lista de Productos</h4>
+                    <table><thead><tr><th>Img</th><th>Nombre</th><th>Precio</th><th>Acciones</th></tr></thead><tbody id="admin-products-table"></tbody></table>
+                </div>
+
+                <!-- Admin: Pedidos -->
+                <div id="admin-pedidos" class="admin-content">
+                    <h3>📦 Registro de Pedidos</h3>
+                    <p style="background: #e8f6f3; padding: 10px; border-radius: 5px; color: #16a085;">
+                        💡 <strong>Instrucciones:</strong> Cuando te llegue un pedido por WhatsApp, copia los datos y regístralos aquí.
+                    </p>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px dashed #ccc;">
+                        <h4>Registrar Nuevo Pedido</h4>
+                        <div class="form-group">
+                            <label>Cliente:</label>
+                            <input type="text" id="order-client" placeholder="Nombre del cliente">
+                        </div>
+                        <div class="form-group">
+                            <label>ID Jugador (Free Fire):</label>
+                            <input type="text" id="order-id" placeholder="Ej: 123456789">
+                        </div>
+                        <div class="form-group">
+                            <label>Detalle del Pedido:</label>
+                            <textarea id="order-details" placeholder="Ej: 1x Auriculares, 2x Recarga 100 Diamantes"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Total ($):</label>
+                            <input type="number" id="order-total">
+                        </div>
+                        <button class="btn-save" onclick="addOrder()">Registrar Pedido</button>
+                    </div>
+
+                    <h4>Historial de Pedidos</h4>
+                    <table>                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>ID FF</th>
+                                <th>Detalle</th>
+                                <th>Total</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-orders-table"></tbody>
+                    </table>
+                </div>
+
+                <!-- Admin: Configuración -->
+                <div id="admin-config" class="admin-content">
+                    <h3>Configuración General</h3>
+                    <div class="form-group">
+                        <label>Número de WhatsApp para Pedidos (con código de país):</label>
+                        <input type="text" id="config-whatsapp" placeholder="Ej: 5215555555555">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre de la Tienda:</label>
+                        <input type="text" id="config-store-name">
+                    </div>
+                    <button class="btn-save" onclick="saveConfig()">Guardar Configuración</button>
+                    <div style="margin-top: 30px; padding: 20px; background: #ffe6e6; border-radius: 8px;">
+                        <h4 style="color: var(--danger);">⚠️ Zona de Peligro</h4>
+                        <button onclick="resetAllData()" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Restaurar Datos de Fábrica</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÓN FLOTANTE CARRITO -->
+    <div class="cart-float" onclick="openCheckout()">
+        <span>🛒 Carrito</span>
+        <span style="background:white; color:var(--whatsapp); padding:2px 8px; border-radius:50%; font-size:0.9rem;" id="cart-count">0</span>
+    </div>
+
+    <!-- MODAL CHECKOUT (WhatsApp) -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <h3>📦 Finalizar Compra</h3>
+            <div id="checkout-items" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto; border-bottom: 1px solid #eee; padding-bottom: 10px;"></div>
+            <p style="text-align: right; font-weight: bold;">Total: $<span id="checkout-total">0</span></p>
+            
+            <div class="form-group">                <label>Tu Nombre:</label>
+                <input type="text" id="checkout-name" placeholder="Juan Pérez">
+            </div>
+            <div class="form-group">
+                <label>ID de Jugador (Free Fire):</label>
+                <input type="text" id="checkout-player-id" placeholder="Ej: 987654321">
+            </div>
+            <div class="form-group">
+                <label>Método de Pago:</label>
+                <select id="checkout-payment">
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                                      <option value="PayPal">PayPal</option>
+                    <option value="Efectivo">Efectivo (Contra entrega)</option>
+                </select>
+            </div>
+
+            <button class="btn-whatsapp" onclick="sendToWhatsApp()">📲 Enviar Pedido por WhatsApp</button>
+            <button onclick="document.getElementById('checkout-modal').style.display='none'" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- MODAL LOGIN -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h3>Acceso Restringido</h3>
+            <p>Contraseña para Acceder:</p>
+            <input type="password" id="admin-pass" style="width: 80%; padding: 8px; margin-bottom: 10px;">
+            <br>
+            <button class="btn-save" onclick="verifyLogin()">Entrar</button>
+            <button onclick="document.getElementById('login-modal').style.display='none'" style="background:none; border:none; color:red; cursor:pointer; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATOS POR DEFECTO ====================
+        const defaultData = {
+            storeName: "SOYGAMERS FF",
+            whatsappNumber: "",
+            principal: { title: "Bienvenido a nuestra tienda", description: "Los mejores productos gaming.", featuredProducts: [1, 2] },
+            recargas: [
+                { id: 1, name: "100 Diamantes", desc: "Recarga directa", price: 1.99 },
+                { id: 2, name: "310 Diamantes", desc: "Recarga directa", price: 4.99 }
+            ],
+            products: [
+                { id: 1, name: "Auriculares Gaming", price: 80, category: "tecnologia", img: "https://via.placeholder.com/200?text=Auriculares" },
+                { id: 2, name: "Mouse Gamer", price: 45, category: "tecnologia", img: "https://via.placeholder.com/200?text=Mouse" }
+            ],
+            orders: []
+        };
+
+        let appData = JSON.parse(localStorage.getItem('soygamers_data')) || defaultData;
+        let cart = [];
+
+        function saveData() { localStorage.setItem('soygamers_data', JSON.stringify(appData)); }
+        function resetAllData() { if(confirm('¿Restaurar todo?')) { localStorage.removeItem('soygamers_data'); location.reload(); } }
+
+        // ==================== INICIALIZACIÓN ====================
+        window.onload = () => {
+            loadConfig();
+            loadPrincipal();
+            loadRecargas();
+            loadProducts();
+            loadOrders();
+        };
+
+        function loadConfig() {
+            document.getElementById('sidebar-store-name').innerText = appData.storeName;
+            document.getElementById('display-store-name').innerText = appData.storeName;
+            document.getElementById('config-store-name').value = appData.storeName;
+            document.getElementById('config-whatsapp').value = appData.whatsappNumber || "";
+        }
+
+        function loadPrincipal() {
+            document.getElementById('display-principal-title').innerText = appData.principal.title;
+            document.getElementById('display-principal-desc').innerText = appData.principal.description;
+            document.getElementById('admin-principal-title').value = appData.principal.title;
+            document.getElementById('admin-principal-desc').value = appData.principal.description;
+            document.getElementById('admin-principal-featured').value = appData.principal.featuredProducts.join(', ');
+            const featured = appData.principal.featuredProducts.map(id => appData.products.find(p => p.id === id)).filter(p => p);
+            renderProducts(featured, 'principal-products');
+        }
+
+        function loadRecargas() {
+            const container = document.getElementById('recargas-list');
+            container.innerHTML = '';
+            appData.recargas.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'recarga-item';
+                item.innerHTML = `
+                    <div><h3>${r.name}</h3><p>${r.desc}</p></div>
+                    <div>
+                        <span class="price">$${r.price}</span>
+                        <button class="btn-add-recarga" onclick="addToCart('recarga', ${r.id})">+</button>
+                    </div>`;
+                container.appendChild(item);
+            });
+            renderAdminRecargasTable();
+        }
+
+        function loadProducts() {
+            renderProducts(appData.products, 'catalog-products');
+            renderAdminProductsTable();
+        }
+
+        function loadOrders() {
+            const tbody = document.getElementById('admin-orders-table');
+            tbody.innerHTML = '';
+            [...appData.orders].reverse().forEach((order, index) => {
+                const tr = document.createElement('tr');
+                const realIndex = appData.orders.length - 1 - index;
+                tr.innerHTML = `
+                    <td>${order.date}</td>
+                    <td>${order.client}</td>
+                    <td>${order.playerId}</td>
+                    <td>${order.details}</td>
+                    <td style="font-weight:bold; color:var(--success)">$${order.total}</td>
+                    <td><button class="btn-delete" onclick="deleteOrder(${realIndex})">X</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==================== NAVEGACIÓN ====================
+        function toggleMenu() { document.getElementById('sidebar').classList.toggle('collapsed'); document.body.classList.toggle('menu-open'); }
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            const buttons = document.querySelectorAll('.menu-btn');
+            if(sectionId === 'principal') buttons[0].classList.add('active');
+            if(sectionId === 'recargas') buttons[1].classList.add('active');
+            if(sectionId === 'catalogs') buttons[2].classList.add('active');
+            if(sectionId === 'admin') buttons[3].classList.add('active');
+        }
+        function showAdminTab(tabId) {
+            document.querySelectorAll('.admin-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            if(tabId === 'admin-pedidos') loadOrders();
+        }
+
+        // ==================== LOGIN ====================
+        function checkAdminAccess() {
+            const modal = document.getElementById('login-modal');
+            modal.style.display = 'flex';
+            document.getElementById('admin-pass').value = '';
+        }
+        function verifyLogin() {
+            if (document.getElementById('admin-pass').value === '2000') {
+                document.getElementById('login-modal').style.display = 'none';
+                showSection('admin');
+            } else { alert('Contraseña incorrecta'); }
+        }
+
+        // ==================== CARRITO Y CHECKOUT ====================
+        function addToCart(type, id) {
+            let item;
+            if (type === 'recarga') item = appData.recargas.find(r => r.id === id);
+            else item = appData.products.find(p => p.id === id);
+            
+            if(item) {
+                cart.push({...item, type});
+                updateCartUI();
+                showNotification('✅ Agregado al carrito');
+            }
+        }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+        }
+
+        function openCheckout() {
+            if (cart.length === 0) { alert('El carrito está vacío'); return; }
+            
+            const modal = document.getElementById('checkout-modal');
+            const itemsContainer = document.getElementById('checkout-items');
+            const totalSpan = document.getElementById('checkout-total');
+            
+            itemsContainer.innerHTML = '';
+            let total = 0;
+            
+            cart.forEach((item, index) => {
+                total += parseFloat(item.price);
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.marginBottom = '5px';
+                div.innerHTML = `<span>${item.name}</span> <b>$${item.price}</b> <span style="color:red; cursor:pointer;" onclick="removeFromCart(${index})">x</span>`;
+                itemsContainer.appendChild(div);
+            });
+            
+            totalSpan.innerText = total.toFixed(2);
+            modal.style.display = 'flex';
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+            openCheckout();
+        }
+
+        function sendToWhatsApp() {
+            const name = document.getElementById('checkout-name').value;
+            const playerId = document.getElementById('checkout-player-id').value;
+            const payment = document.getElementById('checkout-payment').value;
+            const number = appData.whatsappNumber;
+
+            if (!name || !playerId) { alert('Por favor ingresa tu nombre e ID de jugador'); return; }
+            if (!number) { alert('Configura tu número de WhatsApp en Administración > Configuración'); return; }
+
+            let message = `👋 Hola, soy *${name}* (ID: ${playerId})\n`;
+            message += `Quiero realizar el siguiente pedido:\n\n`;
+            
+            let total = 0;
+            cart.forEach(item => {
+                message += `▪️ ${item.name} - $${item.price}\n`;
+                total += parseFloat(item.price);
+            });
+            
+            message += `\n💰 *Total: $${total.toFixed(2)}*`;
+            message += `\n💳 Método de pago: ${payment}`;
+            message += `\n\nQuedo atento a los datos de pago. ¡Gracias!`;
+
+            const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        // ==================== ADMIN: PEDIDOS ====================
+        function addOrder() {
+            const client = document.getElementById('order-client').value;
+            const playerId = document.getElementById('order-id').value;
+            const details = document.getElementById('order-details').value;
+            const total = document.getElementById('order-total').value;
+
+            if(!client || !total) { alert('Completa los campos obligatorios'); return; }
+
+            const newOrder = {
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(),
+                client, playerId, details, total
+            };
+
+            appData.orders.push(newOrder);
+            saveData();
+            loadOrders();
+            
+            document.getElementById('order-client').value = '';
+            document.getElementById('order-id').value = '';
+            document.getElementById('order-details').value = '';
+            document.getElementById('order-total').value = '';
+            
+            showNotification('📦 Pedido registrado');
+        }
+
+        function deleteOrder(index) {
+            if(confirm('¿Eliminar este registro?')) {
+                appData.orders.splice(index, 1);
+                saveData();
+                loadOrders();
+            }
+        }
+
+        // ==================== ADMIN: PRODUCTOS ====================
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('prod-img-preview').src = e.target.result;
+                    document.getElementById('prod-img-preview').style.display = 'block';
+                    document.getElementById('prod-img-base64').value = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function saveProduct() {
+            const id = document.getElementById('prod-edit-id').value;
+            const name = document.getElementById('prod-name').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const category = document.getElementById('prod-category').value;
+            const img = document.getElementById('prod-img-base64').value || "https://via.placeholder.com/200?text=Sin+Imagen";
+
+            if (!name || !price) { alert("Complete nombre y precio"); return; }
+
+            if (id) {
+                const index = appData.products.findIndex(p => p.id == id);
+                const currentImg = document.getElementById('prod-img-base64').value;
+                const finalImg = currentImg ? currentImg : appData.products[index].img;
+                appData.products[index] = { id: parseInt(id), name, price, category, img: finalImg };
+                showNotification('✅ Producto actualizado');
+            } else {
+                const newId = appData.products.length > 0 ? Math.max(...appData.products.map(p => p.id)) + 1 : 1;
+                appData.products.push({ id: newId, name, price, category, img });
+                showNotification('✅ Producto agregado');
+            }
+
+            saveData();
+            clearProductForm();
+            loadProducts();
+        }
+
+        function editProduct(id) {
+            const product = appData.products.find(p => p.id === id);
+            document.getElementById('prod-edit-id').value = product.id;
+            document.getElementById('prod-name').value = product.name;
+            document.getElementById('prod-price').value = product.price;
+            document.getElementById('prod-category').value = product.category;
+            document.getElementById('prod-img-base64').value = '';
+            document.getElementById('prod-img-preview').style.display = 'none';
+        }
+
+        function saveRecarga() {
+            const id = document.getElementById('recarga-edit-id').value;
+            const name = document.getElementById('recarga-name').value;
+            const desc = document.getElementById('recarga-desc').value;
+            const price = parseFloat(document.getElementById('recarga-price').value);
+            if (!name || !price) return;
+            if (id) {
+                const index = appData.recargas.findIndex(r => r.id == id);
+                appData.recargas[index] = { id: parseInt(id), name, desc, price };
+            } else {
+                const newId = appData.recargas.length > 0 ? Math.max(...appData.recargas.map(r => r.id)) + 1 : 1;
+                appData.recargas.push({ id: newId, name, desc, price });
+            }
+            saveData(); clearRecargaForm(); loadRecargas(); showNotification('✅ Guardado');
+        }
+        function clearRecargaForm() { document.getElementById('recarga-edit-id').value = ''; document.getElementById('recarga-name').value = ''; document.getElementById('recarga-desc').value = ''; document.getElementById('recarga-price').value = ''; }
+        function renderAdminRecargasTable() {
+            const tbody = document.getElementById('admin-recargas-table'); tbody.innerHTML = '';
+            appData.recargas.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.name}</td><td>$${r.price}</td><td><button class="btn-edit" onclick="editRecarga(${r.id})">Editar</button> <button class="btn-delete" onclick="deleteRecarga(${r.id})">Borrar</button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        function editRecarga(id) { const r = appData.recargas.find(x => x.id === id); document.getElementById('recarga-edit-id').value = r.id; document.getElementById('recarga-name').value = r.name; document.getElementById('recarga-desc').value = r.desc; document.getElementById('recarga-price').value = r.price; }
+        function deleteRecarga(id) { if(confirm('¿Borrar?')) { appData.recargas = appData.recargas.filter(r => r.id !== id); saveData(); loadRecargas(); } }
+
+        function savePrincipalSettings() {
+            appData.principal.title = document.getElementById('admin-principal-title').value;
+            appData.principal.description = document.getElementById('admin-principal-desc').value;
+            appData.principal.featuredProducts = document.getElementById('admin-principal-featured').value.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            saveData(); loadPrincipal(); showNotification('✅ Guardado');
+        }
+
+        function saveConfig() {
+            appData.storeName = document.getElementById('config-store-name').value;
+            appData.whatsappNumber = document.getElementById('config-whatsapp').value;
+            saveData(); loadConfig(); showNotification('✅ Configuración guardada');
+        }
+
+        function clearProductForm() {
+            document.getElementById('prod-edit-id').value = '';
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('prod-img-file').value = '';
+            document.getElementById('prod-img-base64').value = '';
+            document.getElementById('prod-img-preview').style.display = 'none';
+        }
+
+        function renderAdminProductsTable() {
+            const tbody = document.getElementById('admin-products-table'); tbody.innerHTML = '';
+            appData.products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td><img src="${p.img}" width="40"></td><td>${p.name}</td><td>$${p.price}</td><td><button class="btn-edit" onclick="editProduct(${p.id})">Editar</button> <button class="btn-delete" onclick="deleteProduct(${p.id})">Borrar</button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        function deleteProduct(id) { if(confirm('¿Borrar?')) { appData.products = appData.products.filter(p => p.id !== id); saveData(); loadProducts(); loadPrincipal(); } }
+        function renderProducts(list, containerId) {
+            const container = document.getElementById(containerId); container.innerHTML = '';
+            if(list.length === 0) { container.innerHTML = '<p>No hay productos.</p>'; return; }
+            list.forEach(p => {
+                const card = document.createElement('div'); card.className = 'product-card';
+                card.innerHTML = `<img src="${p.img}"><h3>${p.name}</h3><div style="font-weight:bold; color:var(--success); margin:10px 0;">$${p.price}</div><button class="btn-buy" onclick="addToCart('producto', ${p.id})">Agregar</button>`;
+                container.appendChild(card);
+            });
+        }
+        function showNotification(msg) { const n = document.createElement('div'); n.className = 'notification'; n.innerText = msg; document.body.appendChild(n); setTimeout(() => n.remove(), 3000); }
+    </script>
+</body>
+</html>
